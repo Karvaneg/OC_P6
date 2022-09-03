@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 
+const userRoutes = require('./routes/user');
+
 mongoose.connect('mongodb+srv://user81:piiquante@cluster0.iwnujfs.mongodb.net/?retryWrites=true&w=majority',
 { useNewUrlParser: true,
     useUnifiedTopology: true })
@@ -19,11 +21,11 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use((req, res) => {
+/*app.use((req, res) => {
     res.json({ message: 'Votre requête a bien été reçue !' }); 
-});
+});*/
 
 // Routes attendues par le frontend
-
+app.use('/api/auth', userRoutes);
 
 module.exports = app;
