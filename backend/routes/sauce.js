@@ -15,5 +15,8 @@ router.get('/:id', auth, sauceCtrl.getOneSauce);
 // Requête GET pour afficher toutes les sauces
 router.get('/', auth, sauceCtrl.getAllSauces);
 
+// Requête POST pour likes & dislikes
+router.post("/:id/like", auth, sauceCtrl.manageLike);
+
 // On exporte les routers
 module.exports = router;
