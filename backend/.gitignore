@@ -1,3 +1,7 @@
+# On exclut tout (dossier et contenu)
 node_modules
-images
+images/*
 .env
+
+# Exception de la règle (on conserve le dossier images même s'il est vide)
+!images/.gitkeep

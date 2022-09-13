@@ -1,7 +1,9 @@
+// On importe le modèle Sauce
 const Sauce = require('../models/Sauce');
 // On inclut le module fs de Node js pour la gestion des fichiers
 const fs = require('fs');
 
+// Controleur pour la création d'une sauce
 exports.createSauce = (req, res, next) => {
     const sauceObject = JSON.parse(req.body.sauce);
     delete sauceObject._id;
@@ -15,6 +17,8 @@ exports.createSauce = (req, res, next) => {
         .then(() => res.status(201).json({ message: 'Sauce enregistrée !'})) // on renvoie une réponse de réussite
         .catch(error => res.status(400).json({ error })); // on renvoie la réponse d'erreur générée automatiquement par Mongoose et un code erreur 400
 };
+
+// Controleur pour la modification d'une sauce
 exports.modifySauce = (req, res, next) => {
     const sauceObject = req.file ? {
         ...JSON.parse(req.body.sauce),
@@ -36,6 +40,8 @@ exports.modifySauce = (req, res, next) => {
             res.status(400).json({ error });
         });
 };
+
+// Controleur pour la suppression d'une sauce
 exports.deleteSauce = (req, res, next) => {
     Sauce.findOne({ _id: req.params.id})
        .then(sauce => {
@@ -55,17 +61,22 @@ exports.deleteSauce = (req, res, next) => {
            res.status(500).json({ error });
        });
 };
+
+// Controleur pour l'affichage d'une sauce
 exports.getOneSauce = (req, res, next) =>{
     Sauce.findOne({ _id: req.params.id })
         .then(sauce => res.status(200).json(sauce))
         .catch(error => res.status(400).json({ error }));
 };
+
+// Controleur pour l'affichage de toutes les sauces
 exports.getAllSauces = (req, res, next) => {
     Sauce.find() // on utilise la méthode find et on renvoie un tableau contenant les Sauces de la BDD
         .then(sauces => res.status(200).json(sauces))
         .catch(error => res.status(400).json({ error }));
 };
 
+// Controleur pour gérer les likes et dislikes
 exports.manageLike = (req, res, next) => {
     // On récupère l'userId
     let userId = req.body.userId;
