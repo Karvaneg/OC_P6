@@ -1,4 +1,5 @@
 const express = require('express');
+// Permet de créer des routeurs séparés
 const router = express.Router();
 const userCtrl = require('../controllers/user');
 

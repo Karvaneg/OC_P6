@@ -1,6 +1,6 @@
 // On importe le modèle Sauce
 const Sauce = require('../models/Sauce');
-// On inclut le module fs de Node js pour la gestion des fichiers
+// On inclut le module fs (filesystem) de Node js pour la gestion des fichiers
 const fs = require('fs');
 
 // Controleur pour la création d'une sauce
@@ -26,14 +26,35 @@ exports.modifySauce = (req, res, next) => {
     } : { ...req.body };
   
     delete sauceObject._userId;
+    
     Sauce.findOne({_id: req.params.id})
         .then((sauce) => {
+            // On vérifie si l'auteur de la sauce est bien la personne connectée
+            // si ce n'est pas le cas, on renvoie un message d'erreur
             if (sauce.userId != req.auth.userId) {
-                res.status(401).json({ message : 'Not authorized'});
-            } else {
-                Sauce.updateOne({ _id: req.params.id}, { ...sauceObject, _id: req.params.id})
-                .then(() => res.status(200).json({message : 'Sauce modifiée!'}))
-                .catch(error => res.status(401).json({ error }));
+                res.status(403).json({ message : 'Requête non autorisée !'});
+            } 
+            // Sinon
+            else {
+                // On récupère le contenu du fichier image dans la requête 
+                const testReqFile = req.file;
+                // S'il n'existe pas, on met simplement à jour les modifications
+                if (!testReqFile){
+                    Sauce.updateOne({ _id: req.params.id}, { ...sauceObject, _id: req.params.id})
+                        .then(() => res.status(200).json({message : 'Sauce modifiée!'}))
+                        .catch(error => res.status(401).json({ error }));
+                } 
+                // S'il existe, il faut supprimer l'ancienne image dans le dossier 'images'
+                else {
+                    // On récupère le nom du fichier de l'image de la sauce dans le dossier images
+                    const filenameStock = sauce.imageUrl.split('/images/')[1];
+                    // Et, on le supprime avec 'unlink', puis on met à jour les modifications
+                    fs.unlink(`images/${filenameStock}`, () => {
+                        Sauce.updateOne({ _id: req.params.id}, { ...sauceObject, _id: req.params.id})
+                        .then(() => res.status(200).json({message : 'Sauce modifiée!'}))
+                        .catch(error => res.status(401).json({ error }));
+                    }) 
+                } 
             }
         })
         .catch((error) => {
@@ -46,13 +67,13 @@ exports.deleteSauce = (req, res, next) => {
     Sauce.findOne({ _id: req.params.id})
        .then(sauce => {
            if (sauce.userId != req.auth.userId) {
-               res.status(401).json({message: 'Not authorized'});
+               res.status(403).json({message: 'Requête non autorisée !'});
            } else {
-               const filename = sauce.imageUrl.split('/images/')[1];
+               const filenameStock = sauce.imageUrl.split('/images/')[1];
                // On supprime le fichier image de la sauce
-               fs.unlink(`images/${filename}`, () => {
+               fs.unlink(`images/${filenameStock}`, () => {
                    Sauce.deleteOne({_id: req.params.id})
-                       .then(() => { res.status(200).json({message: 'Sauce supprimée !'})})
+                       .then(() => res.status(200).json({message: 'Sauce supprimée !'}))
                        .catch(error => res.status(401).json({ error }));
                });
            }
@@ -99,9 +120,7 @@ exports.manageLike = (req, res, next) => {
           $inc: { likes: +1 },
         }
       )
-        .then(() =>
-          res.status(200).json({ message: "Like ajouté par l'utilisateur !" })
-        )
+        .then(() => res.status(200).json({ message: "Like ajouté par l'utilisateur !" }))
         .catch((error) => res.status(400).json({ error }));
     }
    
@@ -119,9 +138,7 @@ exports.manageLike = (req, res, next) => {
           $inc: { dislikes: +1 },
         }
       )
-        .then(() =>
-          res.status(200).json({ message: "Dislike ajouté par l'utilisateur !" })
-        )
+        .then(() => res.status(200).json({ message: "Dislike ajouté par l'utilisateur !" }))
         .catch((error) => res.status(400).json({ error }));
     }
    
@@ -140,11 +157,7 @@ exports.manageLike = (req, res, next) => {
               // On supprime l'userId du tableau des usersLiked et on décrémente likes
               { $pull: { usersLiked: userId }, $inc: { likes: -1 } }
             )
-              .then(() =>
-                res
-                  .status(200)
-                  .json({ message: "Like retiré par l'utilisateur !" })
-              )
+              .then(() => res.status(200).json({ message: "Like retiré par l'utilisateur !" }))
               .catch((error) => res.status(400).json({ error }));
           }
           // Suppresson dislike
@@ -156,11 +169,7 @@ exports.manageLike = (req, res, next) => {
               // On supprime l'userId du tableau des usersDisliked et on décrémente disLikes
               { $pull: { usersDisliked: userId }, $inc: { dislikes: -1 } }
             )
-              .then(() =>
-                res
-                  .status(200)
-                  .json({ message: "Dislike retiré par l'utilisateur !" })
-              )
+              .then(() => res.status(200).json({ message: "Dislike retiré par l'utilisateur !" }))
               .catch((error) => res.status(400).json({ error }));
           }
         })

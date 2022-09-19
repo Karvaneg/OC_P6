@@ -14,7 +14,7 @@ const schema = new passwordValidator();
 
 // On ajoute les propriétés au schéma
 schema
-.is().min(6)                                    // Minimum 6 caractères
+.is().min(8)                                    // Minimum 8 caractères
 .is().max(20)                                   // Maximum 20 caractères
 .has().uppercase()                              // Doit contenir des lettres majuscules
 .has().lowercase()                              // Doit contenir des lettres minuscules
@@ -38,7 +38,7 @@ exports.signup = (req, res, next) => {
         })
     } else if (!schema.validate(password)) {
         return res.status(400).send({
-            message: "Le mot de passe n'est pas valide ! Il doit contenir au moins 6 caractères, au  moins 2 chiffres, des majuscules et des minuscules et ne doit pas contenir d'espace."
+            message: "Le mot de passe n'est pas valide ! Il doit contenir au moins 8 caractères, au  moins 2 chiffres, des majuscules et des minuscules et ne doit pas contenir d'espace."
         })
     } else {
         // Première chose que l'on fait, on crypte le mot de passe, il s'agit d'une fonction
@@ -61,6 +61,7 @@ exports.signup = (req, res, next) => {
 
 // Contrôleur pour la connexion à un compte utilisateur
 exports.login = (req, res, next) => {
+    // On vérifie que l'e-mail entré par l'utilisateur correspond à un utilisateur existant de la base de données
     User.findOne({ email: req.body.email })
         .then(user => {
             if (user === null) {
@@ -73,16 +74,18 @@ exports.login = (req, res, next) => {
                         } else {
                             res.status(200).json({
                                 userId: user._id,
+                                // Fonction sign sert à chiffrer un nouveau token
                                 token: jwt.sign(
                                     { userId: user._id },
+                                    // Chaîne aléatoire pour crypter le token
                                     process.env.RANDOM_TOKEN_SECRET,
+                                    // Durée de validité 24h ; Au delà, l'utilisateur doit se reconnecter
                                     { expiresIn: '24h' }
                                 )
                             });
                         }
                     })
-                    .catch(error => res.status(500).json({ error }));
-                    
+                    .catch(error => res.status(500).json({ error }));     
             }
         })
         .catch(error => res.status(500).json({ error }));
